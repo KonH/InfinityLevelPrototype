@@ -16,11 +16,11 @@ public class ChunkManagerController : MonoBehaviour {
 	[Header("Runtime")]
 	[SerializeField]
 	Vector3     CurrentPos   = Vector3.zero;
-	[SerializeField]
 	ChunkHolder CurrentChunk = null;
 
-	IChunkManager _manager = null; 
-	IChunkSource  _source  = null;
+	IChunkManager   _manager = null;
+	IChunkSource    _source  = null;
+	ChunkDictionary _history = null;
 
 	IChunkManager CreateManager() {
 		switch( Mode ) {
@@ -35,14 +35,14 @@ public class ChunkManagerController : MonoBehaviour {
 		_source = GetSource();
 		CurrentPos = Root.position;
 		CurrentChunk = null;
-		AddChunk(Direction.North);
+		_history = new ChunkDictionary();
 	}
 
 	IChunkSource GetSource() {
 		return GetComponentInChildren<IChunkSource>();
 	}
 
-	public void AddChunk(Direction dir) {
+	void AddChunk(Direction dir) {
 		_manager.SpawnChunk(GetNextPos(CurrentPos, dir), _source.GetHolder(CurrentChunk, dir));
 	}
 
@@ -63,5 +63,10 @@ public class ChunkManagerController : MonoBehaviour {
 			case Direction.SouthWest : return GetDirVector(Direction.South) + GetDirVector(Direction.West);
 		}
 		return Vector3.zero;
+	}
+
+	public void CheckAgent(ChunkAgent agent) {
+		var delta = agent.Position - CurrentPos;
+		Debug.Log(delta);
 	}
 }
