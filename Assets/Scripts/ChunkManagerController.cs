@@ -4,6 +4,7 @@ using System.Collections;
 public class ChunkManagerController : MonoBehaviour {
 	public enum ChunkManagerMode {
 		None,
+		Prefabs,
 		Resources,
 		Scenes
 	}
@@ -24,6 +25,7 @@ public class ChunkManagerController : MonoBehaviour {
 
 	IChunkManager CreateManager() {
 		switch( Mode ) {
+			case ChunkManagerMode.Prefabs   : return GetComponent<PrefabChunkManager>();
 			case ChunkManagerMode.Resources : return new ResourcesChunkManager();
 			case ChunkManagerMode.Scenes    : return new SceneChunkManager();
 		}
