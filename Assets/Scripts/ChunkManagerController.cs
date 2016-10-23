@@ -40,6 +40,7 @@ public class ChunkManagerController : MonoBehaviour {
 		CurrentPos = Root.position;
 		CurrentChunk = null;
 		_storage = new ChunkStorage();
+		_storage.AddChunk(new ChunkOffset(0, 0), null);
 	}
 
 	IChunkSource GetSource() {
@@ -71,7 +72,6 @@ public class ChunkManagerController : MonoBehaviour {
 
 	public void CheckAgent(ChunkAgent agent) {
 		var delta = agent.Position - CurrentPos;
-		Debug.Log(delta);
 		CheckForGenerate(delta);
 		CheckForChange(delta);
 	}
