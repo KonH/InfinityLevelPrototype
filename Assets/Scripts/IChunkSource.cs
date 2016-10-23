@@ -2,5 +2,5 @@
 using System.Collections;
 
 public interface IChunkSource {
-	ChunkHolder GetHolder(ChunkHolder current, Direction dir);
+	ChunkHolder GetHolder(ChunkHolder current, ChunkOffset dir);
 }

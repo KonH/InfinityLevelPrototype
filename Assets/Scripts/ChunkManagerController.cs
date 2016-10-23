@@ -16,12 +16,14 @@ public class ChunkManagerController : MonoBehaviour {
 
 	[Header("Runtime")]
 	[SerializeField]
-	Vector3     CurrentPos   = Vector3.zero;
-	ChunkHolder CurrentChunk = null;
+	Vector3     CurrentPos    = Vector3.zero;
+	[SerializeField]
+	ChunkOffset CurrentOffset = new ChunkOffset();
+	ChunkHolder CurrentChunk  = null;
 
-	IChunkManager   _manager = null;
-	IChunkSource    _source  = null;
-	ChunkDictionary _history = null;
+	IChunkManager   _manager  = null;
+	IChunkSource    _source   = null;
+	ChunkStorage    _storage  = null;
 
 	IChunkManager CreateManager() {
 		switch( Mode ) {
@@ -37,66 +39,34 @@ public class ChunkManagerController : MonoBehaviour {
 		_source = GetSource();
 		CurrentPos = Root.position;
 		CurrentChunk = null;
-		_history = new ChunkDictionary();
+		_storage = new ChunkStorage();
 	}
 
 	IChunkSource GetSource() {
 		return GetComponentInChildren<IChunkSource>();
 	}
 
-	void AddChunk(Direction dir) {
-		if( !_history.ContainsKey(dir) ) {
-			var holder = _source.GetHolder(CurrentChunk, dir);
-			_manager.SpawnChunk(GetNextPos(CurrentPos, dir), holder);
-			var newDict = new ChunkDictionary();
-			newDict.Current = holder;
-			newDict.Add(Inverse(dir), _history);
-			_history.Add(dir, newDict);
+	void AddChunk(ChunkOffset offset) {
+		if( !_storage.ContainsChunk(CurrentOffset + offset) ) {
+			var holder = _source.GetHolder(CurrentChunk, offset);
+			_manager.SpawnChunk(GetNextPos(CurrentPos, offset), holder);
+			_storage.AddChunk(CurrentOffset + offset, holder);
 		}
 	}
 
-	bool ChangeChunk(Direction dir) {
-		ChunkDictionary newHistory;
-		_history.TryGetValue(dir, out newHistory);
-		if( newHistory != null ) {
-			_history = newHistory;
-			CurrentPos = GetNextPos(CurrentPos, dir);
-			return true;
-		}
-		return false;
+	bool ChangeChunk(ChunkOffset offset) {
+		CurrentOffset = new ChunkOffset(CurrentOffset.X + offset.X, CurrentOffset.Z + offset.Z);
+		CurrentPos = GetNextPos(CurrentPos, offset);
+		return true;
 	}
 
-	Vector3 GetNextPos(Vector3 current_pos, Direction dir) {
-		var direction = GetDirVector(dir);
-		return current_pos +  direction * ChunkSize;
+	Vector3 GetNextPos(Vector3 current_pos, ChunkOffset offset) {
+		var direction = GetDirVector(offset);
+		return current_pos + direction * ChunkSize;
 	}
 
-	Vector3 GetDirVector(Direction dir) {
-		switch( dir ) {
-			case Direction.North     : return Vector3.forward;
-			case Direction.South     : return Vector3.back;
-			case Direction.West      : return Vector3.left;
-			case Direction.East      : return Vector3.right;
-			case Direction.NorthEast : return GetDirVector(Direction.North) + GetDirVector(Direction.East);
-			case Direction.NorthWest : return GetDirVector(Direction.North) + GetDirVector(Direction.West);
-			case Direction.SouthEast : return GetDirVector(Direction.South) + GetDirVector(Direction.East);
-			case Direction.SouthWest : return GetDirVector(Direction.South) + GetDirVector(Direction.West);
-		}
-		return Vector3.zero;
-	}
-
-	Direction Inverse(Direction dir) {
-		switch( dir ) {
-			case Direction.North     : return Direction.South;
-			case Direction.South     : return Direction.North;
-			case Direction.West      : return Direction.East;
-			case Direction.East      : return Direction.West;
-			case Direction.NorthEast : return Direction.SouthWest;
-			case Direction.NorthWest : return Direction.SouthEast;
-			case Direction.SouthEast : return Direction.NorthWest;
-			case Direction.SouthWest : return Direction.NorthEast;
-		}
-		throw new UnityException("Wrong direction");
+	Vector3 GetDirVector(ChunkOffset offset) {
+		return new Vector3(offset.X, 0, offset.Z);
 	}
 
 	public void CheckAgent(ChunkAgent agent) {
@@ -112,28 +82,28 @@ public class ChunkManagerController : MonoBehaviour {
 		var zUp   = delta.z > ChunkSize/4;
 		var zDown = delta.z < -ChunkSize/4;
 		if( xUp ) {
-			AddChunk(Direction.East);
+			AddChunk(ChunkOffset.East);
 			if( zUp ) {
-				AddChunk(Direction.NorthEast);
+				AddChunk(ChunkOffset.NorthEast);
 			}
 			if( zDown ) {
-				AddChunk(Direction.SouthEast);
+				AddChunk(ChunkOffset.SouthEast);
 			}
 		}
 		if( xDown ) {
-			AddChunk(Direction.West);
+			AddChunk(ChunkOffset.West);
 			if( zUp ) {
-				AddChunk(Direction.NorthWest);
+				AddChunk(ChunkOffset.NorthWest);
 			}
 			if( zDown ) {
-				AddChunk(Direction.SouthWest);
+				AddChunk(ChunkOffset.SouthWest);
 			}
 		}
 		if( zUp ) {
-			AddChunk(Direction.North);
+			AddChunk(ChunkOffset.North);
 		}
 		if( zDown ) {
-			AddChunk(Direction.South);
+			AddChunk(ChunkOffset.South);
 		}
 	}
 
@@ -144,27 +114,27 @@ public class ChunkManagerController : MonoBehaviour {
 		var zDown = delta.z < -ChunkSize/2;
 		if( xUp ) {
 			if( zUp ) {
-				return ChangeChunk(Direction.NorthEast);
+				return ChangeChunk(ChunkOffset.NorthEast);
 			}
 			if( zDown ) {
-				return ChangeChunk(Direction.SouthEast);
+				return ChangeChunk(ChunkOffset.SouthEast);
 			}
-			return ChangeChunk(Direction.East);
+			return ChangeChunk(ChunkOffset.East);
 		}
 		if( xDown ) {
 			if( zUp ) {
-				return ChangeChunk(Direction.NorthWest);
+				return ChangeChunk(ChunkOffset.NorthWest);
 			}
 			if( zDown ) {
-				return ChangeChunk(Direction.SouthWest);
+				return ChangeChunk(ChunkOffset.SouthWest);
 			}
-			return ChangeChunk(Direction.West);
+			return ChangeChunk(ChunkOffset.West);
 		}
 		if( zUp ) {
-			return ChangeChunk(Direction.North);
+			return ChangeChunk(ChunkOffset.North);
 		}
 		if( zDown ) {
-			return ChangeChunk(Direction.South);
+			return ChangeChunk(ChunkOffset.South);
 		}
 		return false;
 	}
