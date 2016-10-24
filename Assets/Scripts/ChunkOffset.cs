@@ -23,6 +23,10 @@ public struct ChunkOffset {
 		return new ChunkOffset(o1.X + o2.X, o1.Z + o2.Z);
 	}
 
+	public static ChunkOffset operator -(ChunkOffset o1, ChunkOffset o2) {
+		return new ChunkOffset(o1.X - o2.X, o1.Z - o2.Z);
+	}
+
 	public static ChunkOffset North     { get { return new ChunkOffset( 0,  1); } }
 	public static ChunkOffset NorthEast { get { return new ChunkOffset( 1,  1); } }
 	public static ChunkOffset East      { get { return new ChunkOffset( 1,  0); } }

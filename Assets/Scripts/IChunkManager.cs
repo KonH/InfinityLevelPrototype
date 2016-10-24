@@ -2,5 +2,6 @@
 using System.Collections;
 
 public interface IChunkManager {
-	void SpawnChunk(Vector3 pos, ChunkHolder holder);
+	ChunkStore SpawnChunk(Vector3 pos, ChunkHolder holder);
+	void DespawnChunk(ChunkStore store);
 }

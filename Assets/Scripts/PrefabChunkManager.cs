@@ -14,8 +14,15 @@ public class PrefabChunkManager : MonoBehaviour, IChunkManager {
 		return null;
 	}
 
-	public void SpawnChunk(Vector3 pos, ChunkHolder holder) {
+	public ChunkStore SpawnChunk(Vector3 pos, ChunkHolder holder) {
 		var prefab = GetPrefab(holder.Name);
-		Instantiate(prefab, pos, Quaternion.identity);
+		var instance = Instantiate(prefab, pos, Quaternion.identity) as GameObject;
+		return new ChunkStore(holder, instance);
+	}
+		
+	public void DespawnChunk(ChunkStore store) {
+		if( store != null ) {
+			Destroy(store.GameObject);
+		}
 	}
 }

@@ -50,13 +50,22 @@ public class ChunkManagerController : MonoBehaviour {
 	void AddChunk(ChunkOffset offset) {
 		if( !_storage.ContainsChunk(CurrentOffset + offset) ) {
 			var holder = _source.GetHolder(CurrentChunk, offset);
-			_manager.SpawnChunk(GetNextPos(CurrentPos, offset), holder);
-			_storage.AddChunk(CurrentOffset + offset, holder);
+			var store = _manager.SpawnChunk(GetNextPos(CurrentPos, offset), holder);
+			_storage.AddChunk(CurrentOffset + offset, store);
 		}
 	}
 
 	bool ChangeChunk(ChunkOffset offset) {
-		CurrentOffset = new ChunkOffset(CurrentOffset.X + offset.X, CurrentOffset.Z + offset.Z);
+		var newOffset = new ChunkOffset(CurrentOffset.X + offset.X, CurrentOffset.Z + offset.Z);
+
+		var behindOffset = CurrentOffset + new ChunkOffset(-offset.X, -offset.Z);
+		Debug.Log(behindOffset.Z);
+		var behindStore = _storage.GetStore(behindOffset);
+		Debug.Log(behindStore);
+		_manager.DespawnChunk(behindStore);
+		_storage.RemoveChunk(behindOffset);
+
+		CurrentOffset = newOffset;
 		CurrentPos = GetNextPos(CurrentPos, offset);
 		return true;
 	}
